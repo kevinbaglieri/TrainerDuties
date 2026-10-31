@@ -1444,6 +1444,19 @@ h1, .page-head h1 { font-weight: 700 !important; letter-spacing: -.025em; }
   .side .brand { align-items: center; padding-left: 0; padding-right: 0; }
   .logo.nav .lmark { margin-right: 0; }
 }
+/* splash mark */
+.splash .in .sp-mark { display: block; width: 88px; height: 88px; margin: 0 auto 18px; border-radius: 26px; box-shadow: 0 22px 50px -18px rgba(10,4,40,.7), 0 0 0 1px rgba(255,255,255,.08); animation: spWord .8s cubic-bezier(.2,.9,.25,1) both; }
+.splash .in .sp-mark svg { display: block; width: 100%; height: 100%; }
+/* windows (sheets) on laptop / tablet: roomier, never touching the edges, no visible scrollbar */
+.sheet { scrollbar-width: none; -ms-overflow-style: none; }
+.sheet::-webkit-scrollbar { width: 0; height: 0; display: none; }
+@media (min-width: 768px) {
+  .scrim { padding: 40px 32px; align-items: center; }
+  .sheet { width: min(760px, calc(100vw - 64px)); max-width: none; max-height: calc(100dvh - 80px); padding: 26px 30px 30px; border-radius: 30px; }
+  .picker-sheet { width: min(640px, calc(100vw - 64px)); }
+}
+@media (min-width: 1200px) { .sheet { width: min(860px, calc(100vw - 64px)); } }
+details.how { align-self: start; height: auto; }
 /* calmer accents */
 .cal-day[aria-pressed="true"] { box-shadow: none; }
 .today-card .horizon circle { filter: none; }
@@ -1458,7 +1471,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
 </head>
 <body>
 <script>window.TD_T0 = performance.now(); window.TD_LOCAL_ONLY = true;</script>
-<div class="splash" id="splash" role="img" aria-label="TrainerDuties — developed by Kevin Baglieri. Unofficial app."><span class="sp-aurora" aria-hidden="true"></span><span class="sp-grid" aria-hidden="true"></span><div class="in"><span class="logo splash-logo"><span class="wordmark">trainer<b>duties</b><i>.</i></span></span><span class="sp-sub">Trainer Duty Reader</span><span class="sp-bar" aria-hidden="true"><i></i></span></div><div class="foot"><span class="dev">Developed by Kevin Baglieri</span><span class="dis">Unofficial app — not an official Riyadh Air product. For quick reference only: always confirm your duties with the official roster.</span></div></div>
+<div class="splash" id="splash" role="img" aria-label="TrainerDuties — developed by Kevin Baglieri. Unofficial app."><span class="sp-aurora" aria-hidden="true"></span><span class="sp-grid" aria-hidden="true"></span><div class="in"><span class="sp-mark"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="spg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5E52A6"/><stop offset="1" stop-color="#2B1D66"/></linearGradient><linearGradient id="sph" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><rect width="100" height="100" rx="24" fill="url(#spg)"/><rect x="1.5" y="1.5" width="97" height="97" rx="22.5" fill="url(#sph)" stroke="#fff" stroke-opacity=".22"/><path d="M24 29H62M43 29V74" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M53 60l10 11 18-26" fill="none" stroke="#D9CFF4" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="logo splash-logo"><span class="wordmark">trainer<b>duties</b><i>.</i></span></span><span class="sp-sub">Trainer Duty Reader</span><span class="sp-bar" aria-hidden="true"><i></i></span></div><div class="foot"><span class="dev">Developed by Kevin Baglieri</span><span class="dis">Unofficial app — not an official Riyadh Air product. For quick reference only: always confirm your duties with the official roster.</span></div></div>
 <div id="app"></div>
 <script id="td-builtin" type="application/json">{"enc": {"iter": 310000, "salt": "fUXHKANPglPS6Wy6eMtQuw==", "iv": "bSjEz5F/w9zbtm0n", "ct": "lPYL5kfgMUnhE+BekwmG6LD4rdcMliVhYgPePX+Chc6twkN7Fn4S0ZAfLVg=", "aad": "TrainerDuties-v1"}, "embeddedAt": "2026-09-20T05:35:27.220305+00:00"}</script>
 <script>
@@ -3818,6 +3831,7 @@ function startCoach() {
         <div class="co-actions"><button class="btn sm ghost" data-coskip>Skip</button><button class="btn sm primary" data-conext>Next</button></div>
       </div>`;
     document.body.appendChild(el);
+    prefs.set('coachDone', 1);
     const hole = $('#coHole', el), tip = $('#coTip', el);
     const place = () => {
       const st = steps[i];
@@ -3926,6 +3940,7 @@ function startTour({ replay } = {}) {
         <button class="btn primary tv-next" data-next>Next</button>
       </div>`;
     document.body.appendChild(el);
+    prefs.set('tourDone', 1);
     const stage = $('#tvStage', el);
     const paint = dir => {
       const sl = slides[i];
