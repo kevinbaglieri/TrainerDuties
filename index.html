@@ -1457,6 +1457,15 @@ h1, .page-head h1 { font-weight: 700 !important; letter-spacing: -.025em; }
 }
 @media (min-width: 1200px) { .sheet { width: min(860px, calc(100vw - 64px)); } }
 details.how { align-self: start; height: auto; }
+/* tour fills the whole phone screen (no white band at the bottom) */
+html.touring, html.touring body { background: #160E3E !important; overflow: hidden; }
+.tour { top: 0; left: 0; right: 0; bottom: auto; height: 100vh; height: 100lvh; min-height: 100%; }
+/* home: breathing room between the cards */
+.today-layout .rail { display: grid; gap: 16px; align-content: start; }
+.today-layout .rail > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+.today-layout .wrap > * + * { margin-top: 16px; }
+.board-row { padding-top: 14px; padding-bottom: 14px; }
+.co-tip { background: var(--glass-strong) !important; box-shadow: 0 24px 60px -24px rgba(20,10,60,.55) !important; }
 /* calmer accents */
 .cal-day[aria-pressed="true"] { box-shadow: none; }
 .today-card .horizon circle { filter: none; }
@@ -3808,17 +3817,18 @@ function coachSteps() {
     { sel: '.hero', title: 'Today’s duty', text: 'Your duty for today: type, shift time and the Trainers with you. Tap it for full details, the source cell and the batch.' },
     { sel: '.nextduty', title: 'Next duty', text: 'Your next working duty, skipping days off and leave — with the date and how far away it is.' },
     { sel: '.board .board-row', title: 'Next days', text: 'The coming roster days. Tomorrow is marked, and each row shows the time and who you’re working with. Tap a row to open that day.' },
-    { sel: '.topbar .icon-btn.m-search', title: 'Search', text: 'Find a Trainer, a date, a duty or a batch number in one search.' },
-    { sel: '.topbar a[href="#settings"], .topbar .me, .topbar .avatar', title: 'You and settings', text: 'Your profile: change Trainer, theme, sounds, hidden Trainers, roster details and the app tour.' },
-    { sel: '.bottom-nav a[href="#calendar"]', title: 'Calendar', text: 'Your month at a glance, colour-coded, with the numbers for that month below the grid.' },
-    { sel: '.bottom-nav a[href="#team"]', title: 'Team', text: 'Who is doing what on any date, or one Trainer’s next two weeks.' },
-    { sel: '.bottom-nav a[href="#batches"]', title: 'Batches', text: 'Every batch with its days grouped by subject and the Trainers who taught it.' },
-    { sel: '.bottom-nav a[href="#health"]', title: 'Roster health', text: 'Your totals: duty days, days off, leave, away days, and the count per code and subject.' }
+    { sel: '.topbar .icon-btn.m-search, .rail .rail-search, .side a[href="#search"]', title: 'Search', text: 'Find a Trainer, a date, a duty or a batch number in one search.' },
+    { sel: '.topbar a[href="#settings"], .topbar .me, .topbar .avatar, .side .me', title: 'You and settings', text: 'Your profile: change Trainer, theme, sounds, hidden Trainers, roster details and the app tour.' },
+    { sel: '.bottom-nav a[href="#calendar"], .side a[href="#calendar"]', title: 'Calendar', text: 'Your month at a glance, colour-coded, with the numbers for that month below the grid.' },
+    { sel: '.bottom-nav a[href="#team"], .side a[href="#team"]', title: 'Team', text: 'Who is doing what on any date, or one Trainer’s next two weeks.' },
+    { sel: '.bottom-nav a[href="#batches"], .side a[href="#batches"]', title: 'Batches', text: 'Every batch with its days grouped by subject and the Trainers who taught it.' },
+    { sel: '.bottom-nav a[href="#health"], .side a[href="#health"]', title: 'Roster health', text: 'Your totals: duty days, days off, leave, away days, and the count per code and subject.' }
   ];
 }
 function startCoach() {
   return new Promise(resolve => {
-    const steps = coachSteps().filter(st => $(st.sel));
+    const vis = sel => [...document.querySelectorAll(sel)].find(e => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden'; });
+    const steps = coachSteps().filter(st => vis(st.sel));
     if (!steps.length) { resolve(); return; }
     let i = 0, done = false;
     const el = document.createElement('div');
@@ -3835,7 +3845,7 @@ function startCoach() {
     const hole = $('#coHole', el), tip = $('#coTip', el);
     const place = () => {
       const st = steps[i];
-      const target = $(st.sel);
+      const target = vis(st.sel);
       if (!target) { next(); return; }
       target.scrollIntoView({ block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth' });
       setTimeout(() => {
@@ -3861,6 +3871,16 @@ function startCoach() {
         if (spaceBelow >= th) tip.style.top = Math.round(r.bottom + 16) + 'px';
         else if (spaceAbove >= th) tip.style.top = Math.round(r.top - th - 16) + 'px';
         else tip.style.top = Math.round(Math.max(12, Math.min(vh - th - 12, r.bottom + 12))) + 'px';
+        tip.style.left = '';
+        if (vw >= 768) {
+          const tw = tip.offsetWidth || 400, rightX = r.left + r.width + pad + 18;
+          if (r.width < 320 && vw - rightX >= tw + 16) {
+            tip.style.left = Math.round(rightX + tw / 2) + 'px';
+            tip.style.top = Math.round(Math.max(12, Math.min(vh - th - 12, r.top + r.height / 2 - th / 2))) + 'px';
+          } else {
+            tip.style.left = Math.round(Math.max(16 + tw / 2, Math.min(vw - tw / 2 - 16, r.left + r.width / 2))) + 'px';
+          }
+        }
         Sound.play('tick'); haptic(6);
       }, reduceMotion() ? 0 : 260);
     };
@@ -3940,6 +3960,7 @@ function startTour({ replay } = {}) {
         <button class="btn primary tv-next" data-next>Next</button>
       </div>`;
     document.body.appendChild(el);
+    document.documentElement.classList.add('touring');
     prefs.set('tourDone', 1);
     const stage = $('#tvStage', el);
     const paint = dir => {
@@ -3961,7 +3982,7 @@ function startTour({ replay } = {}) {
       prefs.set('tourDone', 1);
       Sound.play('success'); haptic([10, 50, 16]);
       el.classList.add('out');
-      setTimeout(() => { el.remove(); resolve(); }, reduceMotion() ? 0 : 420);
+      setTimeout(() => { el.remove(); document.documentElement.classList.remove('touring'); resolve(); }, reduceMotion() ? 0 : 420);
     };
     const go_ = n => {
       const dir = n > i ? 1 : -1;
