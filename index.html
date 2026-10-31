@@ -22,6 +22,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>
 (function () {
+  document.documentElement.classList.add('splashing');
   try {
     var p = JSON.parse(localStorage.getItem('td.theme') || '"light"');
     if (p !== 'system') document.documentElement.setAttribute('data-td', p);
@@ -1458,15 +1459,30 @@ h1, .page-head h1 { font-weight: 700 !important; letter-spacing: -.025em; }
 @media (min-width: 1200px) { .sheet { width: min(860px, calc(100vw - 64px)); } }
 details.how { align-self: start; height: auto; }
 /* tour fills the whole phone screen (no white band at the bottom) */
-html.touring, html.touring body { background: #160E3E !important; overflow: hidden; }
+html.touring, html.touring body, html.splashing, html.splashing body { background: #160E3E !important; overflow: hidden; }
+.splash { bottom: calc(-1 * env(safe-area-inset-bottom, 0px)); }
 .tour { top: 0; left: 0; right: 0; bottom: 0; height: auto; min-height: 0; }
 .tour .tv-foot { padding-bottom: 4px; }
 /* home: breathing room between the cards */
 .today-layout .rail { display: grid; gap: 16px; align-content: start; }
 .today-layout .rail > * { margin-top: 0 !important; margin-bottom: 0 !important; }
 .today-layout .wrap > * + * { margin-top: 16px; }
+.today-layout .wrap > .hero, .today-layout .wrap > :first-child { margin-top: 0 !important; }
+@media (min-width: 768px) { .main { padding-top: calc(14px + env(safe-area-inset-top)) !important; } }
 .board-row { padding-top: 14px; padding-bottom: 14px; }
 .co-tip { background: var(--glass-strong) !important; box-shadow: 0 24px 60px -24px rgba(20,10,60,.55) !important; }
+.today-layout .rail, .split > .sticky { top: 14px !important; }
+/* batch: what is happening today */
+.bnow { margin: 16px 0 6px; padding: 16px 16px 8px; border-radius: 22px; position: relative; overflow: hidden; }
+.bnow.is-today { background: linear-gradient(140deg, rgba(124,106,201,.16), rgba(255,255,255,.75)); box-shadow: inset 0 0 0 1.5px rgba(62,48,136,.22), var(--shadow); }
+:root[data-td="dark"] .bnow.is-today { background: linear-gradient(140deg, rgba(179,164,240,.18), rgba(255,255,255,.04)); }
+.bnow-eye { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--violet-ink); }
+.bnow-t { margin: 6px 0 8px; font: 700 21px/1.2 "Plus Jakarta Sans", sans-serif; letter-spacing: -.02em; }
+.bnow-day { font-size: 13px; font-weight: 700; color: var(--violet-ink); background: var(--violet-soft); padding: 2px 9px; border-radius: 8px; vertical-align: middle; margin-left: 4px; }
+.bnow-l { font-size: 12.5px; font-weight: 600; color: var(--ink-3); margin: 12px 2px 2px; }
+.bnow-list .li { padding: 10px 2px; border-top: 1px solid var(--line); min-height: 56px; background: none; }
+.bnow-list .li:first-child { border-top: 0; }
+.bnow-list .li .sub { font-size: 13px; }
 /* calmer accents */
 .cal-day[aria-pressed="true"] { box-shadow: none; }
 .today-card .horizon circle { filter: none; }
@@ -2538,8 +2554,10 @@ async function setActive(model, meta, { quiet } = {}) {
 async function boot() {
   applyTheme();
   const sp = $('#splash');
+  if (!sp) document.documentElement.classList.remove('splashing');
+  setTimeout(() => document.documentElement.classList.remove('splashing'), 4000);
   if (sp) {
-    const hide = () => sp.classList.add('gone');
+    const hide = () => { sp.classList.add('gone'); setTimeout(() => document.documentElement.classList.remove('splashing'), 650); };
     sp.addEventListener('click', hide);
     setTimeout(hide, Math.max(260, 1500 - (performance.now() - (window.TD_T0 || 0))));
   }
@@ -3388,10 +3406,27 @@ function openBatch(id) {
       <div class="bdays">${ph.items.slice().sort((a, b) => a.d.localeCompare(b.d)).map(dayRow).join('')}</div></details>`;
   }).join('');
   const upcoming = B.dates.filter(d => d >= td), past = B.dates.filter(d => d < td);
+  const nowBlock = (() => {
+    const d = B.days.has(td) ? td : (B.live ? upcoming.find(x => x > td) : null);
+    if (!d) return '';
+    const info = dayInfo(d), isToday = d === td;
+    const seen = new Set(), rows = info.list.filter(x => { if (seen.has(x.tr.id)) return false; seen.add(x.tr.id); return true; })
+      .sort((a, b) => (a.it.flags.includes('Observation') - b.it.flags.includes('Observation')) || a.tr.name.localeCompare(b.tr.name));
+    return `<div class="bnow glass ${isToday ? 'is-today' : ''}">
+      <p class="bnow-eye">${isToday ? 'Today' : 'No session today · next'} · ${esc(fDowS(d))} ${esc(fDM(d))}</p>
+      <h3 class="bnow-t">${esc(info.topic)}${info.dayNo != null ? ` <span class="bnow-day">Day ${info.dayNo}</span>` : ''}</h3>
+      ${info.sb ? `<span class="chip-line"><small class="shift ${info.sb.band.toLowerCase()}">${info.sb.band} · ${esc(info.sb.text)}</small></span>` : ''}
+      <p class="bnow-l">Trainers ${isToday ? 'today' : 'that day'} · ${rows.length}</p>
+      <div class="bnow-list">${rows.map(x => `<button class="li" data-viewt="${esc(x.tr.id)}">${AVW(x.tr.name)}
+        <span class="body"><span class="name">${esc(x.tr.name)}${x.tr.id === S.me ? ' <span class="faint small">(you)</span>' : ''}${x.it.flags.includes('Observation') ? ' <span class="tag">OBS</span>' : ''}</span>
+        <span class="sub">${esc(clean(x.e.v))}</span></span></button>`).join('')}</div>
+    </div>`;
+  })();
   const times = [...B.times.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2);
   openSheet(`<div class="sheet-head"><div class="t"><p class="label">Batch</p><h2>Batch ${esc(B.id)}</h2>
       <p class="muted" style="margin-top:4px">${esc(st[1])} · ${esc(fDMY(B.from))} – ${esc(fDMY(B.to))}</p></div>
     <button class="icon-btn" data-close aria-label="Close">${I.close}</button></div>
+    ${nowBlock}
     <div class="bstats">
       <div><b>${B.dates.length}</b><span>Days</span></div>
       <div><b>${B.trainers.size}</b><span>Trainers</span></div>
